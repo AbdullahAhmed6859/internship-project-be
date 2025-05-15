@@ -4,17 +4,33 @@ import dotenv from "dotenv";
 import cors from "cors";
 
 dotenv.config();
-console.log(process.env.DATABASE_URL);
+const PORT = process.env.PORT || 3000;
+const ENV = process.env.ENV;
+// console.log(process.env.DATABASE_URL);
 // const db = new pg.Client(process.env.DATABASE_URL);
 // db.connect();
 
 const app = express();
+const whitelist = [
+  "https://internship-project-dashboard.netlify.app",
+  "http://localhost:5173",
+];
 
 const corsOptions = {
-  origin: "internship-project-dashboard.netlify.app",
+  // @ts-ignore
+  origin: function (origin, callback) {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 };
 
-app.use(process.env.ENV !== "PROD" ? cors() : cors(corsOptions));
+app.use(cors(corsOptions));
+
+app.use(express.json());
 // app.use(cors());
 
 app.get("/", (req, res) => {
@@ -24,5 +40,8 @@ app.get("/", (req, res) => {
   });
 });
 
-app.listen(3000);
-console.log("App started on http://localhost:3000");
+app.listen(PORT, () => {
+  if (ENV === "DEV") {
+    console.log(`App started on http://localhost:${PORT}`);
+  }
+});
